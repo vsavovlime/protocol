@@ -328,23 +328,29 @@ On-chain
                |      v                  | channel_close_mutual
                |   +--------------+      |
 channel_settle |   |     open     | -----+
-               |   +--------------+
-               |    ^ |    |
-               |    | | channel_withdraw/
-               |    | | channel_snapshot_solo/
+               |   +--------------+ ------------------------> +--------------+ 
+               |    ^ |    |    ^    channel_force_progress   |    locked    |
+               |    | |    |    |                             +--------------+
+               |    | |    |    |       [lock_timeout]          |   ^ |
+               |    | |    |    +-------------------------------+   | |
+               |    | |    |                                        +-+
+               |    | | channel_withdraw/                      channel_slash/
+               |    | | channel_snapshot_solo/            channel_force_progress
                |    | | channel_deposit/
-               |    | | channel_force_progress
+               |    | |    |
                |    +-+    |
                |           | channel_close_solo
-               |           v
-               |   +--------------+
-               +-- |    closing   | ----+
-                   +--------------+     | channel_slash/
-                                 ^      | channel_force_progress
-                                 |      |
-                                 +------+
+               |           |
+               |           |          channel_slash/
+               |           v        channel_force_progress
+               |   +--------------+ --------------------> +--------------+
+               +-- |    closing   |                       |    locked    |
+                   +--------------+ <-------------------- +--------------+
+                                        [lock_timeout]
 ```
 
+***Note***: `[lock_timeout]` is not an explicit message of the protocol but the
+expiration of a timer.
 
 ### Contract execution
 
